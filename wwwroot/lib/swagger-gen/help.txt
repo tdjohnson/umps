@@ -1,0 +1,14 @@
+NAME
+    swagger-gen - Input your `swagger.json` and generate a static swagger UI.
+
+USAGE
+    swagger-gen swagger.json
+
+USAGE WITH PIPES
+    cat swagger.json | swagger-gen
+
+OPTIONS
+    -d, --dest      the output destination of the swagger site
+    --no-try-out    hide the 'Try it out' buttons in the Swagger UI
+    -h, --help      display this help message
+
