@@ -1,0 +1,1 @@
+ENTRYPOINT ["dotnet", "umps.dll"]
