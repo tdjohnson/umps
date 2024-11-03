@@ -18,7 +18,7 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 # Expose port 80
-EXPOSE 80
+EXPOSE 8080
 
 # Start the application
 ENTRYPOINT ["dotnet", "umps.dll"]
