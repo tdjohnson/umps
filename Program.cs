@@ -1,12 +1,25 @@
+using umps.Hubs;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.AddCors(options => options.AddPolicy("CorsPolicy",
+        builder =>
+        {
+            builder.AllowAnyHeader()
+                   .AllowAnyMethod()
+                   .SetIsOriginAllowed((host) => true)
+                   .AllowCredentials();
+        }));
+
+builder.Services.AddSignalR();
 builder.Services.AddRazorPages();
-builder.Services.AddControllers(); // Add services for controllers
-builder.Services.AddEndpointsApiExplorer(); // Add services for API explorer
-builder.Services.AddSwaggerGen(); // Add services for Swagger
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseCors("CorsPolicy");
 
 app.UseStaticFiles();
 
@@ -14,13 +27,16 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-app.UseSwagger(); // Enable middleware to serve generated Swagger as a JSON endpoint
+app.UseSwagger();
 app.UseSwaggerUI(c => 
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
 });
 
+
 app.MapRazorPages();
 app.MapControllers();
+app.MapHub<ControlHub>("/controlHub");
+
 
 app.Run();
