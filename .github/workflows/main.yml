@@ -16,8 +16,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v2
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -39,7 +37,6 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v4
       with:
-       driver: docker-container
        platforms: linux/arm64
        context: .
        file: build/Dockerfile
