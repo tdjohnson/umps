@@ -37,6 +37,7 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v4
       with:
+       driver: docker-container
        platforms: linux/arm64
        context: .
        file: build/Dockerfile
