@@ -1,3 +1,4 @@
 {
-    "dotnet.defaultSolution": "umps.sln"
+    "dotnet.defaultSolution": "umps.sln",
+    "liveServer.settings.port": 5501
 }
