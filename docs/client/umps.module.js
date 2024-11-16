@@ -1,5 +1,3 @@
-import * as signalR from 'signalR';
-
 var playerId = Math.floor(Math.random() * 100).toString();
  
 var hub = new signalR.HubConnectionBuilder().withUrl("http://188.245.62.68:8080/controlhub").configureLogging(signalR.LogLevel.Information).build();
