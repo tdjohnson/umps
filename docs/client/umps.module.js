@@ -2,7 +2,7 @@ import * as SIGNALR from './signalr.js';
 
 var playerId = Math.floor(Math.random() * 100).toString();
  
-var hub = new SIGNALR.HubConnectionBuilder().withUrl("http://188.245.62.68:8080/controlhub").configureLogging(signalR.LogLevel.Information).build();
+var hub = new SIGNALR.HubConnectionBuilder().withUrl("http://188.245.62.68:8080/controlhub").configureLogging(SIGNALR.LogLevel.Information).build();
 
 hub.start()
     .then(function () {
