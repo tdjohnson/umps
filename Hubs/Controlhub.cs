@@ -8,6 +8,6 @@ public class ControlHub : Hub
     {
         // Broadcast the data to all clients
         await Clients.All.SendAsync("ReceiveData", player);
-        Console.WriteLine("player: " + player.id + " " + player.x + " " + player.y + " " + player.z  + " " + player.a);
+        Console.WriteLine("player: " + player.id + " " + player.x + " " + player.y + " " + player.z  + " " + player.xd + " " + player.yd + " " + player.zd);
     }
 }
