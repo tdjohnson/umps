@@ -4,6 +4,20 @@ namespace umps.Hubs;
 
 public class ControlHub : Hub
 {
+    public static List<string> ConnectedClients = new List<string>();
+
+    public override async Task OnConnectedAsync()
+    {
+        ConnectedClients.Add(Context.ConnectionId);
+        await base.OnConnectedAsync();
+    }
+
+    public override async Task OnDisconnectedAsync(Exception exception)
+    {
+        ConnectedClients.Remove(Context.ConnectionId);
+        await base.OnDisconnectedAsync(exception);
+    }
+
     public async Task SendData(Player player)
     {
         // Broadcast the data to all clients

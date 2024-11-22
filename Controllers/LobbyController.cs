@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using umps.Hubs;
 
 namespace umps.Controllers
 {
@@ -9,7 +10,7 @@ namespace umps.Controllers
         [Route("api/[controller]/GetPlayers")]
         public IActionResult GetPlayers()
         {
-            return Ok("ListOfPlayers");
+            return Ok(ControlHub.ConnectedClients);
         }
     }
 }
