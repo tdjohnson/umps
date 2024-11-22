@@ -7,7 +7,7 @@ function roundNum(num) {
 
 export class UMPS {
 	constructor() {
-		this.hub = new signalR.HubConnectionBuilder().withUrl("http://umps.tdj23.com:8080/controlhub").configureLogging(signalR.LogLevel.Information).build();
+		this.hub = new signalR.HubConnectionBuilder().withUrl("https://umps.tdj23.com/controlhub").configureLogging(signalR.LogLevel.Information).build();
 		this.hub.start()
 			.then(function () {
 				console.log("Connected to UMPS");
