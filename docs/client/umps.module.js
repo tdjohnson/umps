@@ -1,13 +1,14 @@
+import config from './config.js'; // Import the config file
+
 var playerId = Math.floor(Math.random() * 100).toString();
 
 function roundNum(num) {
     return Math.round(num * 100) / 100;
 }
 
-
 export class UMPS {
-	constructor() {
-		this.hub = new signalR.HubConnectionBuilder().withUrl("https://umps.tdj23.com/controlhub").configureLogging(signalR.LogLevel.Information).build();
+	constructor(url = config.defaultUrl) {
+		this.hub = new signalR.HubConnectionBuilder().withUrl(url).configureLogging(signalR.LogLevel.Information).build();
 		this.hub.start()
 			.then(function () {
 				console.log("Connected to UMPS");
