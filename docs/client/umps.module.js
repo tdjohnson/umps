@@ -1,19 +1,34 @@
 import config from './config.js'; // Import the config file
-import { v4 as uuidv4 } from 'uuid'; // Import the uuid library
+
+function uuidv4() {
+	return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+	  (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
+	);
+}
 
 var playerId = uuidv4(); // Generate a UUID for playerId
 var playerName = "unknown";
-
-function roundNum(num) {
-    return Math.round(num * 100) / 100;
-}
-
+ 
 async function fetchPlayerName(playerId) {
-    const response = await fetch(`${config.defaultUrl}/api/Lobby/GetPlayerName?id=${playerId}`);
+    const response = await fetch(`${config.baseUrl}/api/Lobby/GetPlayerName?id=${playerId}`);
     if (response.ok) {
         const name = await response.text();
+		console.log(name);
         return name;
     } else {
+        throw new Error('Player not found');
+    }
+}
+
+async function savePlayerName(playerId, playerName) {
+    const response = await fetch(`${config.baseUrl}/api/Lobby/SetPlayerName?id=${playerId}&name=${playerName}`, {
+		method: "POST"
+	});
+
+    if (response.ok) {
+        return;
+    } else {
+		console.log(response);
         throw new Error('Player not found');
     }
 }
@@ -41,7 +56,18 @@ export class UMPS {
 	async GetPlayerName(playerId) {
 		try {
 			const name = await fetchPlayerName(playerId);
+			console.log(name);
 			return name;
+		} catch (error) {
+			console.error(error);
+			return "unknown";
+		}
+	}
+
+	async SetPlayerName(playerId, playerName) {
+		try {
+			await savePlayerName(playerId, playerName);
+			return;
 		} catch (error) {
 			console.error(error);
 			return "unknown";
