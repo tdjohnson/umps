@@ -18,8 +18,8 @@ namespace umps.Controllers
         {
             var servers = new List<Server>
             {
-                new Server { defaultUrl = "https://umps.tdj23.com/controlhub", baseUrl = "https://umps.tdj23.com" },
-                new Server { defaultUrl = "https://umps2.tdj23.com/controlhub", baseUrl = "https://umps2.tdj23.com" }
+                new Server { id = "1", name = "JVA Regensburg", defaultUrl = "https://umps.tdj23.com/controlhub", baseUrl = "https://umps.tdj23.com" },
+                new Server { id = "2", name = "JVA Schwandorf", defaultUrl = "https://umps2.tdj23.com/controlhub", baseUrl = "https://umps2.tdj23.com" }
             };
             return Ok(servers);
         }
