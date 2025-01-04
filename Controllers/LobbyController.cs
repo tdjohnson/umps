@@ -8,7 +8,7 @@ namespace umps.Controllers
     [ApiController]
     public class LobbyController : ControllerBase
     {
-        private static ConcurrentDictionary<string, string> playerNames = new ConcurrentDictionary<string, string>();
+    private static ConcurrentDictionary<string, string> playerNames = new ConcurrentDictionary<string, string>();
 
         [HttpGet]
         [Route("api/[controller]/GetPlayers")]

@@ -8,6 +8,16 @@ function roundNum(num) {
     return Math.round(num * 100) / 100;
 }
 
+async function fetchPlayerName(playerId) {
+    const response = await fetch(`${config.defaultUrl}/api/Lobby/GetPlayerName?id=${playerId}`);
+    if (response.ok) {
+        const name = await response.text();
+        return name;
+    } else {
+        throw new Error('Player not found');
+    }
+}
+
 export class UMPS {
 	constructor(url = config.defaultUrl) {
 		this.hub = new signalR.HubConnectionBuilder().withUrl(url).configureLogging(signalR.LogLevel.Information).build();
@@ -27,6 +37,17 @@ export class UMPS {
 	GetPlayerName() {
 		return playerName;
 	}
+
+	async GetPlayerName(playerId) {
+		try {
+			const name = await fetchPlayerName(playerId);
+			return name;
+		} catch (error) {
+			console.error(error);
+			return "unknown";
+		}
+	}
+
 	on(eventName, callback) {
 		this.hub.on(eventName, callback);
 	}
