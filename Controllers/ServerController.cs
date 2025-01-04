@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using umps.Models;
 
 namespace umps.Controllers
 {
