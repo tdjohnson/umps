@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using umps.Models;
 
 namespace umps.Controllers
 {
@@ -16,7 +17,12 @@ namespace umps.Controllers
         [Route("api/[controller]/GetServers")]
         public IActionResult GetServer()
         {
-            return Ok("ListOfServers");
+            var servers = new List<Server>
+            {
+                new Server { defaultUrl = "https://umps.tdj23.com/controlhub", baseUrl = "https://umps.tdj23.com" },
+                new Server { defaultUrl = "https://umps2.tdj23.com/controlhub", baseUrl = "https://umps2.tdj23.com" }
+            };
+            return Ok(servers);
         }
     }
 }
