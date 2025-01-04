@@ -19,6 +19,12 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+var server = new Server
+{
+    id = Guid.NewGuid().ToString(),
+    name = "Default",
+};
+
 app.UseCors("CorsPolicy");
 
 app.UseStaticFiles();
