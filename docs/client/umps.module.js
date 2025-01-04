@@ -1,6 +1,8 @@
 import config from './config.js'; // Import the config file
+import { v4 as uuidv4 } from 'uuid'; // Import the uuid library
 
-var playerId = Math.floor(Math.random() * 100).toString();
+var playerId = uuidv4(); // Generate a UUID for playerId
+var playerName = "unknown";
 
 function roundNum(num) {
     return Math.round(num * 100) / 100;
@@ -20,6 +22,10 @@ export class UMPS {
 
 	GetPlayerId() {
 		return playerId;
+	}
+
+	GetPlayerName() {
+		return playerName;
 	}
 	on(eventName, callback) {
 		this.hub.on(eventName, callback);
