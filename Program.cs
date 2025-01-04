@@ -1,4 +1,5 @@
 using umps.Hubs;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,13 @@ app.UseCors("CorsPolicy");
 
 app.UseStaticFiles();
 
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "wwwroot")),
+    RequestPath = "/static"
+});
+
 app.UseRouting();
 
 app.UseAuthorization();
@@ -39,10 +47,18 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
 });
 
-
 app.MapRazorPages();
 app.MapControllers();
 app.MapHub<ControlHub>("/controlHub");
 
+app.MapGet("/config.js", async context =>
+{
+    await context.Response.SendFileAsync(Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "config.js"));
+});
+
+app.MapGet("/umps.module.js", async context =>
+{
+    await context.Response.SendFileAsync(Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "umps.module.js"));
+});
 
 app.Run();
