@@ -9,11 +9,6 @@ function uuidv4() {
 var playerId = uuidv4(); // Generate a UUID for playerId
 var playerName = "unknown";
  
-
-function roundNum(num) {
-    return Math.round(num * 100) / 100;
-}
-
 async function fetchPlayerName(playerId) {
     const response = await fetch(`${config.baseUrl}/api/Lobby/GetPlayerName?id=${playerId}`);
     if (response.ok) {
