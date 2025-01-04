@@ -1,13 +1,26 @@
-var playerId = Math.floor(Math.random() * 100).toString();
+import config from './config.js'; // Import the config file
+import { v4 as uuidv4 } from 'uuid'; // Import the uuid library
+
+var playerId = uuidv4(); // Generate a UUID for playerId
+var playerName = "unknown";
 
 function roundNum(num) {
     return Math.round(num * 100) / 100;
 }
 
+async function fetchPlayerName(playerId) {
+    const response = await fetch(`${config.defaultUrl}/api/Lobby/GetPlayerName?id=${playerId}`);
+    if (response.ok) {
+        const name = await response.text();
+        return name;
+    } else {
+        throw new Error('Player not found');
+    }
+}
 
 export class UMPS {
-	constructor() {
-		this.hub = new signalR.HubConnectionBuilder().withUrl("https://umps.tdj23.com/controlhub").configureLogging(signalR.LogLevel.Information).build();
+	constructor(url = config.defaultUrl) {
+		this.hub = new signalR.HubConnectionBuilder().withUrl(url).configureLogging(signalR.LogLevel.Information).build();
 		this.hub.start()
 			.then(function () {
 				console.log("Connected to UMPS");
@@ -20,6 +33,21 @@ export class UMPS {
 	GetPlayerId() {
 		return playerId;
 	}
+
+	GetPlayerName() {
+		return playerName;
+	}
+
+	async GetPlayerName(playerId) {
+		try {
+			const name = await fetchPlayerName(playerId);
+			return name;
+		} catch (error) {
+			console.error(error);
+			return "unknown";
+		}
+	}
+
 	on(eventName, callback) {
 		this.hub.on(eventName, callback);
 	}
