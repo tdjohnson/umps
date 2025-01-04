@@ -34,7 +34,8 @@ async function savePlayerName(playerId, playerName) {
 }
 
 export class UMPS {
-	constructor(url = config.defaultUrl) {
+	constructor(url) {
+		this.url = url;
 		this.hub = new signalR.HubConnectionBuilder().withUrl(url).configureLogging(signalR.LogLevel.Information).build();
 		this.hub.start()
 			.then(function () {
