@@ -83,6 +83,7 @@ export class UMPS {
 		this.hub.invoke(eventName, data);
 	}
 
+	//player position and direction
 	SendData (pos,dir) {
 		this.hub.invoke("SendData", {
 			id: playerId.toString(),
@@ -92,6 +93,15 @@ export class UMPS {
 			xd: roundNum(dir.x),
 			yd: roundNum(dir.y),
 			zd: roundNum(dir.z)
+		});
+	}
+
+	//events, like bullet hit
+	SendEvent (type, source, destination) {
+		this.hub.invoke("SendEvent", {
+			type: type.toString(),
+			source: source.toString(),
+			destination: destination.toString(),
 		});
 	}
 

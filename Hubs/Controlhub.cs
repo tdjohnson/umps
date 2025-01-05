@@ -24,4 +24,11 @@ public class ControlHub : Hub
         await Clients.All.SendAsync("ReceiveData", player);
         Console.WriteLine("player: " + player.id + " " + player.x + " " + player.y + " " + player.z  + " " + player.xd + " " + player.yd + " " + player.zd);
     }
+
+    public async Task SendEvent(Event e)
+    {
+        // Broadcast the event to all clients
+        await Clients.All.SendAsync("ReceiveEvent", e);
+        Console.WriteLine("event: " + e.type + " " + e.source + " " + e.destination);
+    }
 }
