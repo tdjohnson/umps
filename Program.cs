@@ -13,6 +13,7 @@ builder.Services.AddCors(options => options.AddPolicy("CorsPolicy",
         }));
 
 builder.Services.AddSignalR();
+builder.Services.AddHostedService<SessionTimer>();
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -20,6 +21,9 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+SessionStore.DurationSeconds = builder.Configuration.GetValue("SessionSeconds", SessionStore.DurationSeconds);
+SessionStore.JoinClosesSeconds = builder.Configuration.GetValue("SessionJoinClosesSeconds", SessionStore.JoinClosesSeconds);
+SessionStore.MaxPlayers = builder.Configuration.GetValue("SessionMaxPlayers", SessionStore.MaxPlayers);
 ScoreStore.Load(builder.Configuration["ScoresFile"] ?? Path.Combine(builder.Environment.ContentRootPath, "scores.json"));
 
 var server = new Server
