@@ -22,7 +22,7 @@ public class SessionTimer : BackgroundService
                 foreach (var session in SessionStore.TakeExpired())
                 {
                     var group = SessionStore.GroupName(session.id);
-                    await hub.Clients.Group(group).SendAsync("ReceiveEvent", new Event { type = "sessionEnded", source = session.id, destination = JsonSerializer.Serialize(session.scores) });
+                    await hub.Clients.Group(group).SendAsync("ReceiveEvent", new Event { type = "sessionEnded", source = session.id, destination = JsonSerializer.Serialize(new { kills = session.kills, defeats = session.defeats }) });
                     Console.WriteLine("event: sessionEnded " + session.id);
 
                     // Players of a finished session go back to the lobby

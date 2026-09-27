@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
 
 namespace umps.Hubs;
@@ -35,22 +36,24 @@ public class ControlHub : Hub
         await base.OnDisconnectedAsync(exception);
     }
 
-    // Returns the session, or null if it does not exist or is over
+    // Returns the session, or null if it is over, closed for joining or full
     public async Task<Session?> JoinSession(string sessionId)
     {
-        var session = SessionStore.Get(sessionId);
-        if (session == null)
+        if (SessionStore.GroupOf(Context.ConnectionId) == SessionStore.GroupName(sessionId))
         {
-            return null;
+            return SessionStore.Get(sessionId);
         }
 
-        await MoveTo(SessionStore.GroupName(sessionId), () => SessionStore.Join(Context.ConnectionId, sessionId));
-        return SessionStore.Get(sessionId);
+        var moved = await MoveTo(SessionStore.GroupName(sessionId), () => SessionStore.Join(Context.ConnectionId, sessionId));
+        return moved ? SessionStore.Get(sessionId) : null;
     }
 
     public async Task LeaveSession()
     {
-        await MoveTo(SessionStore.Lobby, () => SessionStore.Leave(Context.ConnectionId));
+        if (SessionStore.GroupOf(Context.ConnectionId) != SessionStore.Lobby)
+        {
+            await MoveTo(SessionStore.Lobby, () => { SessionStore.Leave(Context.ConnectionId); return true; });
+        }
     }
 
     public async Task SendData(Player player)
@@ -73,24 +76,52 @@ public class ControlHub : Hub
 
         if (e.type == "defeated" && !string.IsNullOrEmpty(e.destination))
         {
-            SessionStore.AddDefeat(Context.ConnectionId, e.destination);
-            ScoreStore.AddDefeat(e.destination);
-            await Clients.All.SendAsync("ScoresUpdated", ScoreStore.Scores);
+            var (name, by) = ParseDefeated(e.destination);
+            if (!string.IsNullOrEmpty(name))
+            {
+                SessionStore.AddDefeat(Context.ConnectionId, name, by);
+                ScoreStore.AddDefeat(name);
+                await Clients.All.SendAsync("ScoresUpdated", ScoreStore.Scores);
+            }
         }
     }
 
-    private async Task MoveTo(string group, Action update)
+    // destination is either the plain name or JSON {"name": victim, "by": last player who hit}
+    private static (string? name, string? by) ParseDefeated(string destination)
+    {
+        if (destination.TrimStart().StartsWith("{"))
+        {
+            try
+            {
+                using var json = JsonDocument.Parse(destination);
+                var name = json.RootElement.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String ? n.GetString() : null;
+                var by = json.RootElement.TryGetProperty("by", out var b) && b.ValueKind == JsonValueKind.String ? b.GetString() : null;
+                return (name, by);
+            }
+            catch (JsonException)
+            {
+            }
+        }
+        return (destination, null);
+    }
+
+    // The other players see the move as a player who left
+    private async Task<bool> MoveTo(string group, Func<bool> update)
     {
         var current = SessionStore.GroupOf(Context.ConnectionId);
-        if (current == group)
+        if (!update())
         {
-            return;
+            return false;
         }
 
-        await SendLeft();
+        if (connectionPlayers.TryGetValue(Context.ConnectionId, out var playerId))
+        {
+            await Clients.GroupExcept(current, Context.ConnectionId).SendAsync("ReceiveEvent", new Event { type = "left", source = playerId, destination = "" });
+            Console.WriteLine("event: left " + playerId);
+        }
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, current);
-        update();
         await Groups.AddToGroupAsync(Context.ConnectionId, group);
+        return true;
     }
 
     private async Task SendLeft()
