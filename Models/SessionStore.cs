@@ -7,6 +7,8 @@ public static class SessionStore
     // Joining closes this many seconds before the end
     public static int JoinClosesSeconds = 15;
     public static int MaxPlayers = 12;
+    // The next round starts this many seconds after a session ends
+    public static int PauseSeconds = 10;
     public const string Lobby = "lobby";
 
     private class Entry
@@ -15,6 +17,8 @@ public static class SessionStore
         public string name = "";
         public DateTime startedAt;
         public DateTime endsAt;
+        // False for a restarted round until its players got 'sessionStarted'
+        public bool announced = true;
         public ConcurrentDictionary<string, int> kills = new ConcurrentDictionary<string, int>();
         public ConcurrentDictionary<string, int> defeats = new ConcurrentDictionary<string, int>();
     }
@@ -48,8 +52,9 @@ public static class SessionStore
     // Sessions that can still be joined
     public static List<Session> GetRunning()
     {
-        var closing = DateTime.UtcNow.AddSeconds(JoinClosesSeconds);
-        return sessions.Values.Where(s => s.endsAt > closing).OrderBy(s => s.startedAt).Select(ToSession).ToList();
+        var now = DateTime.UtcNow;
+        var closing = now.AddSeconds(JoinClosesSeconds);
+        return sessions.Values.Where(s => s.startedAt <= now && s.endsAt > closing).OrderBy(s => s.startedAt).Select(ToSession).ToList();
     }
 
     public static Session? Get(string sessionId)
@@ -80,7 +85,7 @@ public static class SessionStore
             {
                 return false;
             }
-            if (entry.endsAt <= DateTime.UtcNow.AddSeconds(JoinClosesSeconds))
+            if (entry.startedAt > DateTime.UtcNow || entry.endsAt <= DateTime.UtcNow.AddSeconds(JoinClosesSeconds))
             {
                 return false;
             }
@@ -100,7 +105,8 @@ public static class SessionStore
 
     public static void AddDefeat(string connectionId, string name, string? by)
     {
-        if (connectionSessions.TryGetValue(connectionId, out var sessionId) && sessions.TryGetValue(sessionId, out var entry))
+        // Defeats during the pause between rounds do not count
+        if (connectionSessions.TryGetValue(connectionId, out var sessionId) && sessions.TryGetValue(sessionId, out var entry) && entry.announced)
         {
             entry.defeats.AddOrUpdate(name, 1, (key, count) => count + 1);
             if (!string.IsNullOrEmpty(by))
@@ -110,24 +116,61 @@ public static class SessionStore
         }
     }
 
-    // Removes the sessions whose time is up and returns them with their scores and connections
-    public static List<(string id, Dictionary<string, int> kills, Dictionary<string, int> defeats, List<string> connections)> TakeExpired()
+    // Returns the sessions whose time is up with their scores. A session with players in it
+    // restarts in itself after the pause with its scores reset; one without players is removed.
+    // next is the id of the restarted session, or null if it was removed.
+    public static List<(string id, string? next, Dictionary<string, int> kills, Dictionary<string, int> defeats)> TakeExpired()
     {
-        var expired = new List<(string, Dictionary<string, int>, Dictionary<string, int>, List<string>)>();
+        var expired = new List<(string, string?, Dictionary<string, int>, Dictionary<string, int>)>();
         var now = DateTime.UtcNow;
-        foreach (var entry in sessions.Values.Where(s => s.endsAt <= now).ToList())
+        lock (connectionSessions)
         {
-            if (sessions.TryRemove(entry.id, out _))
+            foreach (var entry in sessions.Values.Where(s => s.announced && s.endsAt <= now).ToList())
             {
-                var connections = connectionSessions.Where(c => c.Value == entry.id).Select(c => c.Key).ToList();
-                foreach (var connection in connections)
+                var kills = new Dictionary<string, int>(entry.kills);
+                var defeats = new Dictionary<string, int>(entry.defeats);
+                string? next = null;
+                if (connectionSessions.Values.Contains(entry.id))
                 {
-                    connectionSessions.TryRemove(connection, out _);
+                    entry.kills.Clear();
+                    entry.defeats.Clear();
+                    entry.startedAt = now.AddSeconds(PauseSeconds);
+                    entry.endsAt = entry.startedAt.AddSeconds(DurationSeconds);
+                    entry.announced = false;
+                    next = entry.id;
                 }
-                expired.Add((entry.id, new Dictionary<string, int>(entry.kills), new Dictionary<string, int>(entry.defeats), connections));
+                else
+                {
+                    sessions.TryRemove(entry.id, out _);
+                }
+                expired.Add((entry.id, next, kills, defeats));
             }
         }
         return expired;
+    }
+
+    // Restarted sessions whose pause is over. Sessions everybody left during the pause are removed.
+    public static List<Session> TakeStarting()
+    {
+        var starting = new List<Session>();
+        var now = DateTime.UtcNow;
+        lock (connectionSessions)
+        {
+            foreach (var entry in sessions.Values.Where(s => !s.announced && s.startedAt <= now).ToList())
+            {
+                entry.announced = true;
+                var session = ToSession(entry);
+                if (session.playerCount == 0)
+                {
+                    sessions.TryRemove(entry.id, out _);
+                }
+                else
+                {
+                    starting.Add(session);
+                }
+            }
+        }
+        return starting;
     }
 
     private static Session ToSession(Entry entry)
