@@ -3,10 +3,10 @@ using System.Collections.Concurrent;
 // Running sessions, who is in them and the defeats counted in each
 public static class SessionStore
 {
-    public const int DurationSeconds = 120;
+    public static int DurationSeconds = 120;
     // Joining closes this many seconds before the end
-    public const int JoinClosesSeconds = 15;
-    public const int MaxPlayers = 12;
+    public static int JoinClosesSeconds = 15;
+    public static int MaxPlayers = 12;
     public const string Lobby = "lobby";
 
     private class Entry
