@@ -24,6 +24,8 @@ public class SessionTimer : BackgroundService
                     var group = SessionStore.GroupName(session.id);
                     await hub.Clients.Group(group).SendAsync("ReceiveEvent", new Event { type = "sessionEnded", source = session.id, destination = JsonSerializer.Serialize(new { kills = session.kills, defeats = session.defeats, next = session.next }) });
                     Console.WriteLine("event: sessionEnded " + session.id);
+
+                    HallOfFameStore.AddRound(session.name, session.kills, session.defeats);
                 }
 
                 foreach (var session in SessionStore.TakeStarting())

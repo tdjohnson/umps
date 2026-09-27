@@ -47,6 +47,13 @@ namespace umps.Controllers
         }
 
         [HttpGet]
+        [Route("api/[controller]/GetHallOfFame")]
+        public IActionResult GetHallOfFame()
+        {
+            return Ok(HallOfFameStore.GetEntries());
+        }
+
+        [HttpGet]
         [Route("api/[controller]/GetSessions")]
         public IActionResult GetSessions()
         {

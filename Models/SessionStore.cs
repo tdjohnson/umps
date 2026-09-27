@@ -119,9 +119,9 @@ public static class SessionStore
     // Returns the sessions whose time is up with their scores. A session with players in it
     // restarts in itself after the pause with its scores reset; one without players is removed.
     // next is the id of the restarted session, or null if it was removed.
-    public static List<(string id, string? next, Dictionary<string, int> kills, Dictionary<string, int> defeats)> TakeExpired()
+    public static List<(string id, string name, string? next, Dictionary<string, int> kills, Dictionary<string, int> defeats)> TakeExpired()
     {
-        var expired = new List<(string, string?, Dictionary<string, int>, Dictionary<string, int>)>();
+        var expired = new List<(string, string, string?, Dictionary<string, int>, Dictionary<string, int>)>();
         var now = DateTime.UtcNow;
         lock (connectionSessions)
         {
@@ -143,7 +143,7 @@ public static class SessionStore
                 {
                     sessions.TryRemove(entry.id, out _);
                 }
-                expired.Add((entry.id, next, kills, defeats));
+                expired.Add((entry.id, entry.name, next, kills, defeats));
             }
         }
         return expired;
