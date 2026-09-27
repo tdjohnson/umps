@@ -14,7 +14,10 @@ namespace umps.Controllers
         [Route("api/[controller]/GetPlayers")]
         public IActionResult GetPlayers()
         {
-            return Ok(ControlHub.ConnectedClients);
+            lock (ControlHub.ConnectedClients)
+            {
+                return Ok(ControlHub.ConnectedClients.ToList());
+            }
         }
 
          [HttpPost]
@@ -34,6 +37,27 @@ namespace umps.Controllers
                 return Ok(name);
             }
             return NotFound("Player not found");
+        }
+
+        [HttpGet]
+        [Route("api/[controller]/GetScores")]
+        public IActionResult GetScores()
+        {
+            return Ok(ScoreStore.Scores);
+        }
+
+        [HttpGet]
+        [Route("api/[controller]/GetSessions")]
+        public IActionResult GetSessions()
+        {
+            return Ok(SessionStore.GetRunning());
+        }
+
+        [HttpPost]
+        [Route("api/[controller]/CreateSession")]
+        public IActionResult CreateSession()
+        {
+            return Ok(SessionStore.Create());
         }
     }
 }

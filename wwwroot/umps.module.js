@@ -65,6 +65,46 @@ export class UMPS {
 		}
 	}
 
+	//defeat counts per player name
+	async GetScores() {
+		const response = await fetch(`${config.baseUrl}/api/Lobby/GetScores`);
+		if (response.ok) {
+			return await response.json();
+		}
+		console.log(response);
+		return {};
+	}
+
+	//running sessions, each with secondsRemaining and playerCount
+	async GetSessions() {
+		const response = await fetch(`${config.baseUrl}/api/Lobby/GetSessions`);
+		if (response.ok) {
+			return await response.json();
+		}
+		console.log(response);
+		return [];
+	}
+
+	async CreateSession() {
+		const response = await fetch(`${config.baseUrl}/api/Lobby/CreateSession`, {
+			method: "POST"
+		});
+		if (response.ok) {
+			return await response.json();
+		}
+		console.log(response);
+		throw new Error('Session not created');
+	}
+
+	//returns the session, or null if it does not exist or is over
+	JoinSession(sessionId) {
+		return this.hub.invoke("JoinSession", sessionId);
+	}
+
+	LeaveSession() {
+		return this.hub.invoke("LeaveSession");
+	}
+
 	async SetPlayerName(playerId, playerName) {
 		try {
 			await savePlayerName(playerId, playerName);
@@ -84,9 +124,10 @@ export class UMPS {
 	}
 
 	//player position and direction
-	SendData (pos,dir) {
+	SendData (pos,dir,type = "human") {
 		this.hub.invoke("SendData", {
 			id: playerId.toString(),
+			type: type.toString(),
 			x: roundNum(pos.x),
 			y: roundNum(pos.y),
 			z: roundNum(pos.z),
