@@ -24,7 +24,6 @@ var app = builder.Build();
 SessionStore.DurationSeconds = builder.Configuration.GetValue("SessionSeconds", SessionStore.DurationSeconds);
 SessionStore.JoinClosesSeconds = builder.Configuration.GetValue("SessionJoinClosesSeconds", SessionStore.JoinClosesSeconds);
 SessionStore.MaxPlayers = builder.Configuration.GetValue("SessionMaxPlayers", SessionStore.MaxPlayers);
-SessionStore.PauseSeconds = builder.Configuration.GetValue("SessionPauseSeconds", SessionStore.PauseSeconds);
 ScoreStore.Load(builder.Configuration["ScoresFile"] ?? Path.Combine(builder.Environment.ContentRootPath, "scores.json"));
 
 var server = new Server

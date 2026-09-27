@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace umps.Hubs;
 
-// Ends sessions when their time is up and starts the follow-up rounds
+// Ends sessions when their time is up
 public class SessionTimer : BackgroundService
 {
     private readonly IHubContext<ControlHub> hub;
@@ -22,21 +22,15 @@ public class SessionTimer : BackgroundService
                 foreach (var session in SessionStore.TakeExpired())
                 {
                     var group = SessionStore.GroupName(session.id);
-                    await hub.Clients.Group(group).SendAsync("ReceiveEvent", new Event { type = "sessionEnded", source = session.id, destination = JsonSerializer.Serialize(new { kills = session.kills, defeats = session.defeats, next = session.next }) });
+                    await hub.Clients.Group(group).SendAsync("ReceiveEvent", new Event { type = "sessionEnded", source = session.id, destination = JsonSerializer.Serialize(new { kills = session.kills, defeats = session.defeats }) });
                     Console.WriteLine("event: sessionEnded " + session.id);
 
-                    // Players of a finished session wait in the follow-up round
+                    // Players of a finished session go back to the lobby
                     foreach (var connection in session.connections)
                     {
                         await hub.Groups.RemoveFromGroupAsync(connection, group);
-                        await hub.Groups.AddToGroupAsync(connection, SessionStore.GroupName(session.next!));
+                        await hub.Groups.AddToGroupAsync(connection, SessionStore.Lobby);
                     }
-                }
-
-                foreach (var session in SessionStore.TakeStarting())
-                {
-                    await hub.Clients.Group(SessionStore.GroupName(session.id)).SendAsync("ReceiveEvent", new Event { type = "sessionStarted", source = session.id, destination = JsonSerializer.Serialize(session) });
-                    Console.WriteLine("event: sessionStarted " + session.id);
                 }
             }
             catch (Exception ex)
