@@ -13,6 +13,7 @@ builder.Services.AddCors(options => options.AddPolicy("CorsPolicy",
         }));
 
 builder.Services.AddSignalR();
+builder.Services.AddHostedService<SessionTimer>();
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

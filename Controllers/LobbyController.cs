@@ -45,5 +45,19 @@ namespace umps.Controllers
         {
             return Ok(ScoreStore.Scores);
         }
+
+        [HttpGet]
+        [Route("api/[controller]/GetSessions")]
+        public IActionResult GetSessions()
+        {
+            return Ok(SessionStore.GetRunning());
+        }
+
+        [HttpPost]
+        [Route("api/[controller]/CreateSession")]
+        public IActionResult CreateSession()
+        {
+            return Ok(SessionStore.Create());
+        }
     }
 }
