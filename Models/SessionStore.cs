@@ -17,7 +17,7 @@ public static class SessionStore
         public string name = "";
         public DateTime startedAt;
         public DateTime endsAt;
-        // False for a follow-up round until its players got 'sessionStarted'
+        // False for a restarted round until its players got 'sessionStarted'
         public bool announced = true;
         public ConcurrentDictionary<string, int> kills = new ConcurrentDictionary<string, int>();
         public ConcurrentDictionary<string, int> defeats = new ConcurrentDictionary<string, int>();
@@ -37,21 +37,16 @@ public static class SessionStore
 
     public static Session Create()
     {
-        return ToSession(NewEntry(DateTime.UtcNow, true));
-    }
-
-    private static Entry NewEntry(DateTime startsAt, bool announced)
-    {
+        var now = DateTime.UtcNow;
         var entry = new Entry
         {
             id = Guid.NewGuid().ToString(),
             name = "Hofgang " + Interlocked.Increment(ref sessionNumber),
-            startedAt = startsAt,
-            endsAt = startsAt.AddSeconds(DurationSeconds),
-            announced = announced
+            startedAt = now,
+            endsAt = now.AddSeconds(DurationSeconds)
         };
         sessions[entry.id] = entry;
-        return entry;
+        return ToSession(entry);
     }
 
     // Sessions that can still be joined
@@ -110,7 +105,8 @@ public static class SessionStore
 
     public static void AddDefeat(string connectionId, string name, string? by)
     {
-        if (connectionSessions.TryGetValue(connectionId, out var sessionId) && sessions.TryGetValue(sessionId, out var entry))
+        // Defeats during the pause between rounds do not count
+        if (connectionSessions.TryGetValue(connectionId, out var sessionId) && sessions.TryGetValue(sessionId, out var entry) && entry.announced)
         {
             entry.defeats.AddOrUpdate(name, 1, (key, count) => count + 1);
             if (!string.IsNullOrEmpty(by))
@@ -120,36 +116,40 @@ public static class SessionStore
         }
     }
 
-    // Removes the sessions whose time is up and moves their players into a follow-up round
-    // that starts after the pause. next is null if nobody was left to play on.
-    public static List<(string id, string? next, Dictionary<string, int> kills, Dictionary<string, int> defeats, List<string> connections)> TakeExpired()
+    // Returns the sessions whose time is up with their scores. A session with players in it
+    // restarts in itself after the pause with its scores reset; one without players is removed.
+    // next is the id of the restarted session, or null if it was removed.
+    public static List<(string id, string? next, Dictionary<string, int> kills, Dictionary<string, int> defeats)> TakeExpired()
     {
-        var expired = new List<(string, string?, Dictionary<string, int>, Dictionary<string, int>, List<string>)>();
+        var expired = new List<(string, string?, Dictionary<string, int>, Dictionary<string, int>)>();
         var now = DateTime.UtcNow;
         lock (connectionSessions)
         {
-            foreach (var entry in sessions.Values.Where(s => s.endsAt <= now).ToList())
+            foreach (var entry in sessions.Values.Where(s => s.announced && s.endsAt <= now).ToList())
             {
-                if (sessions.TryRemove(entry.id, out _))
+                var kills = new Dictionary<string, int>(entry.kills);
+                var defeats = new Dictionary<string, int>(entry.defeats);
+                string? next = null;
+                if (connectionSessions.Values.Contains(entry.id))
                 {
-                    var connections = connectionSessions.Where(c => c.Value == entry.id).Select(c => c.Key).ToList();
-                    string? next = null;
-                    if (connections.Count > 0)
-                    {
-                        next = NewEntry(now.AddSeconds(PauseSeconds), false).id;
-                        foreach (var connection in connections)
-                        {
-                            connectionSessions[connection] = next;
-                        }
-                    }
-                    expired.Add((entry.id, next, new Dictionary<string, int>(entry.kills), new Dictionary<string, int>(entry.defeats), connections));
+                    entry.kills.Clear();
+                    entry.defeats.Clear();
+                    entry.startedAt = now.AddSeconds(PauseSeconds);
+                    entry.endsAt = entry.startedAt.AddSeconds(DurationSeconds);
+                    entry.announced = false;
+                    next = entry.id;
                 }
+                else
+                {
+                    sessions.TryRemove(entry.id, out _);
+                }
+                expired.Add((entry.id, next, kills, defeats));
             }
         }
         return expired;
     }
 
-    // Follow-up rounds whose pause is over. Rounds everybody left during the pause are dropped.
+    // Restarted sessions whose pause is over. Sessions everybody left during the pause are removed.
     public static List<Session> TakeStarting()
     {
         var starting = new List<Session>();
