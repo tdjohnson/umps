@@ -20,6 +20,8 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+ScoreStore.Load(builder.Configuration["ScoresFile"] ?? Path.Combine(builder.Environment.ContentRootPath, "scores.json"));
+
 var server = new Server
 {
     id = Guid.NewGuid().ToString(),

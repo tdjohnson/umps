@@ -65,6 +65,16 @@ export class UMPS {
 		}
 	}
 
+	//defeat counts per player name
+	async GetScores() {
+		const response = await fetch(`${config.baseUrl}/api/Lobby/GetScores`);
+		if (response.ok) {
+			return await response.json();
+		}
+		console.log(response);
+		return {};
+	}
+
 	async SetPlayerName(playerId, playerName) {
 		try {
 			await savePlayerName(playerId, playerName);
@@ -84,9 +94,10 @@ export class UMPS {
 	}
 
 	//player position and direction
-	SendData (pos,dir) {
+	SendData (pos,dir,type = "human") {
 		this.hub.invoke("SendData", {
 			id: playerId.toString(),
+			type: type.toString(),
 			x: roundNum(pos.x),
 			y: roundNum(pos.y),
 			z: roundNum(pos.z),
